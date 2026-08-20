@@ -140,7 +140,7 @@ func (a *App) buildCore() {
 	a.taskMgr = taskmanager.NewTaskManager(a.taskRepo, a.docStore, nil, a.logger, a.auditLogger)
 	a.taskMgr.SetDeviceRepo(a.deviceRepo)
 
-	a.hub = wsshub.NewHub(a.agentMgr, a.taskMgr, a.logger, a.auditLogger)
+	a.hub = wsshub.NewHub(a.agentMgr, a.taskMgr, a.deviceMgr, a.logger, a.auditLogger)
 	a.taskMgr.SetHub(a.hub)
 
 	a.sseHub = restapi.NewSSEHub(a.logger)

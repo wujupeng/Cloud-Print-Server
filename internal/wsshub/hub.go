@@ -10,6 +10,7 @@ import (
 	"nhooyr.io/websocket"
 
 	"github.com/cloud-print/server/internal/agentmanager"
+	"github.com/cloud-print/server/internal/devicemanager"
 	"github.com/cloud-print/server/internal/domain"
 	"github.com/cloud-print/server/internal/errs"
 	"github.com/cloud-print/server/internal/observability"
@@ -19,16 +20,18 @@ import (
 type Hub struct {
 	agentMgr       *agentmanager.Manager
 	taskMgr        *taskmanager.TaskManager
+	deviceMgr      *devicemanager.Manager
 	logger         *zap.Logger
 	audit          *observability.AuditLogger
 	heartbeatTimeout time.Duration
 	checkInterval   time.Duration
 }
 
-func NewHub(agentMgr *agentmanager.Manager, taskMgr *taskmanager.TaskManager, logger *zap.Logger, audit *observability.AuditLogger) *Hub {
+func NewHub(agentMgr *agentmanager.Manager, taskMgr *taskmanager.TaskManager, deviceMgr *devicemanager.Manager, logger *zap.Logger, audit *observability.AuditLogger) *Hub {
 	return &Hub{
 		agentMgr:         agentMgr,
 		taskMgr:          taskMgr,
+		deviceMgr:        deviceMgr,
 		logger:           logger,
 		audit:            audit,
 		heartbeatTimeout: 90 * time.Second,

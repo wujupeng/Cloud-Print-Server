@@ -36,6 +36,7 @@ func (h *Hub) readLoop(ctx context.Context, ac *agentmanager.AgentConnection) {
 }
 
 func (h *Hub) HandleMessage(ctx context.Context, agentID string, env *domain.Envelope) error {
+
 	if !domain.IsUpstream(env.Type) {
 		h.logger.Warn("unknown upstream type", zap.String("agent_id", agentID), zap.String("type", env.Type))
 		return nil
@@ -103,11 +104,15 @@ func (h *Hub) handleDeviceStatus(ctx context.Context, agentID string, env *domai
 	if err := json.Unmarshal(env.Payload, &p); err != nil {
 		return err
 	}
-	h.logger.Info("device status update",
-		zap.String("agent_id", agentID),
-		zap.String("device_id", p.DeviceID),
-		zap.String("status", p.Status.String()),
-	)
+	if h.deviceMgr != nil {
+		if err := h.deviceMgr.HandleDeviceStatus(ctx, agentID, p.DeviceID, p.Status, p.Protocol); err != nil {
+			h.logger.Warn("device status update failed",
+				zap.String("agent_id", agentID),
+				zap.String("device_id", p.DeviceID),
+				zap.Error(err),
+			)
+		}
+	}
 	return nil
 }
 

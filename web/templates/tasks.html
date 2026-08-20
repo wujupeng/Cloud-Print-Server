@@ -65,10 +65,16 @@ function startSSE(){
       if(row){
         const badge=row.querySelector('.badge');
         if(badge){badge.textContent=data.status;badge.className='badge badge-'+data.status.toLowerCase();}
+        if(data.status==='SUCCESS'||data.status==='FAILED'||data.status==='CANCELLED'){
+          setTimeout(()=>location.reload(),500);
+        }
+      }else{
+        setTimeout(()=>location.reload(),500);
       }
     }catch(err){}
   });
 }
 startSSE();
+setTimeout(()=>location.reload(),15000);
 </script>
 {{end}}
