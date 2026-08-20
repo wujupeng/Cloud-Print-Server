@@ -2,6 +2,7 @@ package webui
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"html/template"
 	"io/fs"
@@ -65,8 +66,8 @@ func loadTemplates(templateFS fs.FS) (map[string]*template.Template, error) {
 	}
 	funcMap := template.FuncMap{
 		"hasPrefix":  strings.HasPrefix,
-		"lower":      strings.ToLower,
-		"upper":      strings.ToUpper,
+		"lower":      func(v interface{}) string { return strings.ToLower(fmt.Sprintf("%v", v)) },
+		"upper":      func(v interface{}) string { return strings.ToUpper(fmt.Sprintf("%v", v)) },
 		"formatTime": formatTime,
 	}
 	baseTmpl := template.New("base.html").Funcs(funcMap)
