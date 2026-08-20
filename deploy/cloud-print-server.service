@@ -1,0 +1,53 @@
+[Unit]
+Description=Cloud Print Server
+Documentation=https://print.oascii.com
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=cps
+Group=cps
+ExecStart=/usr/local/bin/cloud-print-server -config /etc/cloud-print-server/config.yaml
+WorkingDirectory=/var/lib/cloud-print-server
+RuntimeDirectory=cloud-print-server
+RuntimeDirectoryMode=0755
+
+Environment=CPS_JWT_SECRET_FILE=/etc/cloud-print-server/jwt.secret
+Environment=CPS_MASTER_KEY_FILE=/etc/cloud-print-server/master.key
+
+Restart=on-failure
+RestartSec=5s
+TimeoutStartSec=30
+TimeoutStopSec=30
+WatchdogSec=30s
+
+MemoryMax=512M
+LimitNOFILE=65536
+TasksMax=512
+
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+NoNewPrivileges=true
+ReadWritePaths=/var/lib/cloud-print-server /var/log/cloud-print-server
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cloud-print-server
+
+[Install]
+WantedBy=multi-user.target

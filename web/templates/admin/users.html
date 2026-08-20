@@ -1,0 +1,55 @@
+{{template "admin_layout" .}}
+{{define "admin_content"}}
+<section class="page-header">
+  <h1>用户管理</h1>
+  <button class="btn-primary" onclick="document.getElementById('userForm').style.display='block'">新建用户</button>
+</section>
+<section class="panel">
+  <table class="data-table" id="usersTable">
+    <thead>
+      <tr><th>用户 ID</th><th>用户名</th><th>显示名</th><th>角色</th><th>状态</th><th>创建时间</th><th>操作</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+<section class="panel" id="userForm" style="display:none">
+  <h2>新建用户</h2>
+  <form id="newUserForm" class="form-row">
+    <input name="username" placeholder="用户名 (>=3)" required>
+    <input name="password" type="password" placeholder="密码 (>=6)" required>
+    <input name="display_name" placeholder="显示名">
+    <select name="role"><option value="USER">USER</option><option value="ADMIN">ADMIN</option></select>
+    <select name="status"><option value="ACTIVE">ACTIVE</option><option value="DISABLED">DISABLED</option></select>
+    <button type="submit" class="btn-primary">创建</button>
+    <button type="button" class="btn-link" onclick="document.getElementById('userForm').style.display='none'">取消</button>
+  </form>
+</section>
+<script>
+function loadUsers(){
+  fetch('/api/v1/admin/users').then(r=>r.json()).then(res=>{
+    const data=res.data||[];
+    document.querySelector('#usersTable tbody').innerHTML=data.map(u=>`<tr>
+      <td>${u.user_id}</td><td>${u.username}</td><td>${u.display_name||''}</td>
+      <td>${u.role}</td><td>${u.status}</td><td>${u.created_at||''}</td>
+      <td><button class="btn-link" onclick="deleteUser('${u.user_id}')">删除</button></td>
+    </tr>`).join('');
+  });
+}
+function deleteUser(id){
+  if(!confirm('确认删除用户?'))return;
+  fetch('/api/v1/admin/users/'+id,{method:'DELETE'}).then(()=>loadUsers());
+}
+document.getElementById('newUserForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  const body={};
+  fd.forEach((v,k)=>body[k]=v);
+  fetch('/api/v1/admin/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json()).then(()=>{
+    e.target.reset();
+    document.getElementById('userForm').style.display='none';
+    loadUsers();
+  });
+});
+loadUsers();
+</script>
+{{end}}

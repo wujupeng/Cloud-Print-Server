@@ -1,0 +1,87 @@
+{{template "base_layout" .}}
+{{define "page_content"}}
+<section class="page-header">
+  <h1>新建任务</h1>
+  <p class="muted">上传文档、选择设备、设置打印参数</p>
+</section>
+<section class="panel">
+  <form id="newTaskForm" class="form-grid">
+    <div class="form-section">
+      <h3>1. 上传文档</h3>
+      <input type="file" name="file" id="fileInput" required>
+      <div id="uploadResult" class="muted"></div>
+    </div>
+    <div class="form-section">
+      <h3>2. 选择设备</h3>
+      <select name="device_id" required>
+        <option value="">请选择设备</option>
+        {{range .Devices}}
+        <option value="{{.DeviceID}}">{{.Name}} ({{.IP}} · {{.Protocol}})</option>
+        {{else}}
+        <option value="" disabled>无可用设备</option>
+        {{end}}
+      </select>
+    </div>
+    <div class="form-section">
+      <h3>3. 打印参数</h3>
+      <div class="form-row">
+        <label>份数
+          <input type="number" name="copies" value="1" min="1" max="999">
+        </label>
+        <label>方向
+          <select name="orientation">
+            <option value="portrait">纵向</option>
+            <option value="landscape">横向</option>
+            <option value="auto">自动</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">提交任务</button>
+      <a href="/tasks" class="btn-link">取消</a>
+    </div>
+  </form>
+</section>
+<section class="panel" id="taskResult" style="display:none">
+  <h2>任务已创建</h2>
+  <pre id="taskResultBox" class="code-box"></pre>
+  <a href="/tasks" class="btn-primary">查看任务列表</a>
+</section>
+<script>
+let uploadedDocID='';
+document.getElementById('fileInput').addEventListener('change',async e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const fd=new FormData();
+  fd.append('file',file);
+  document.getElementById('uploadResult').textContent='上传中...';
+  try{
+    const res=await fetch('/api/v1/documents/upload',{method:'POST',body:fd}).then(r=>r.json());
+    uploadedDocID=res.data.doc_id;
+    document.getElementById('uploadResult').textContent='已上传: '+res.data.filename+' ('+res.data.size+' bytes) doc_id='+uploadedDocID;
+  }catch(err){
+    document.getElementById('uploadResult').textContent='上传失败: '+err;
+  }
+});
+document.getElementById('newTaskForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(!uploadedDocID){alert('请先上传文档');return;}
+  const fd=new FormData(e.target);
+  const body={
+    device_id:fd.get('device_id'),
+    doc_id:uploadedDocID,
+    copies:parseInt(fd.get('copies')||'1'),
+    orientation:fd.get('orientation')||'portrait',
+  };
+  try{
+    const res=await fetch('/api/v1/tasks/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
+    const box=document.getElementById('taskResultBox');
+    box.textContent=JSON.stringify(res.data,null,2);
+    document.getElementById('taskResult').style.display='block';
+  }catch(err){
+    alert('提交失败: '+err);
+  }
+});
+</script>
+{{end}}

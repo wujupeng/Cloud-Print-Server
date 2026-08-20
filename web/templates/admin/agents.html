@@ -1,0 +1,99 @@
+{{template "admin_layout" .}}
+{{define "admin_content"}}
+<section class="page-header">
+  <h1>Agent 管理</h1>
+  <button class="btn-primary" onclick="document.getElementById('agentForm').style.display='block'">注册新 Agent</button>
+</section>
+<section class="panel">
+  <table class="data-table" id="agentsTable">
+    <thead>
+      <tr><th>Agent ID</th><th>名称</th><th>工厂</th><th>版本</th><th>在线</th><th>在线设备</th><th>待处理</th><th>网络</th><th>最近心跳</th><th>操作</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+<section class="panel" id="agentForm" style="display:none">
+  <h2>注册新 Agent</h2>
+  <form id="newAgentForm" class="form-row">
+    <input name="name" placeholder="Agent 名称" required>
+    <input name="factory_id" placeholder="工厂 ID" required>
+    <input name="version" placeholder="版本 (可选)">
+    <button type="submit" class="btn-primary">注册并生成凭证</button>
+    <button type="button" class="btn-link" onclick="document.getElementById('agentForm').style.display='none'">取消</button>
+  </form>
+  <div id="credResult" class="callout" style="display:none"></div>
+</section>
+<section class="panel" id="credPanel" style="display:none">
+  <h2>Agent 凭证</h2>
+  <pre id="credBox" class="code-box"></pre>
+  <button class="btn-link" onclick="document.getElementById('credPanel').style.display='none'">关闭</button>
+</section>
+<section class="panel" id="configForm" style="display:none">
+  <h2>下发配置更新 <span id="configAgentID" class="muted"></span></h2>
+  <form id="configUpdateForm" class="form-row">
+    <input name="config_version" type="number" placeholder="配置版本" required>
+    <textarea name="patch" placeholder='JSON Patch, 例如 {"cloud_endpoint":"https://new.example.com"}' required></textarea>
+    <input name="reason" placeholder="变更原因 (可选)">
+    <button type="submit" class="btn-primary">下发</button>
+    <button type="button" class="btn-link" onclick="document.getElementById('configForm').style.display='none'">取消</button>
+  </form>
+</section>
+<script>
+let currentAgentID='';
+function loadAgents(){
+  fetch('/api/v1/admin/agents').then(r=>r.json()).then(res=>{
+    const data=res.data||[];
+    document.querySelector('#agentsTable tbody').innerHTML=data.map(a=>`<tr>
+      <td>${a.agent_id}</td><td>${a.name||''}</td><td>${a.factory_id||''}</td>
+      <td>${a.version||''}</td><td>${a.online?'是':'否'}</td>
+      <td>${a.online_devices||0}</td><td>${a.pending_tasks||0}</td>
+      <td>${a.net_class||''}</td><td>${a.last_heartbeat_at||''}</td>
+      <td>
+        <button class="btn-link" onclick="getCredentials('${a.agent_id}')">凭证</button>
+        <button class="btn-link" onclick="openConfig('${a.agent_id}')">配置下发</button>
+      </td>
+    </tr>`).join('');
+  });
+}
+function getCredentials(id){
+  fetch('/api/v1/admin/agents/'+id+'/credentials').then(r=>r.json()).then(res=>{
+    const d=res.data||{};
+    document.getElementById('credBox').textContent=
+      'Agent ID: '+d.agent_id+'\nToken: '+d.token+'\nEncToken: '+d.enc_token;
+    document.getElementById('credPanel').style.display='block';
+  });
+}
+function openConfig(id){
+  currentAgentID=id;
+  document.getElementById('configAgentID').textContent='('+id+')';
+  document.getElementById('configForm').style.display='block';
+}
+document.getElementById('newAgentForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  const body={};
+  fd.forEach((v,k)=>body[k]=v);
+  fetch('/api/v1/admin/agents',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json()).then(res=>{
+    e.target.reset();
+    document.getElementById('agentForm').style.display='none';
+    const d=res.data||{};
+    const box=document.getElementById('credResult');
+    box.style.display='block';
+    box.innerHTML='<pre class="code-box">Agent ID: '+d.agent_id+'\nToken: '+d.token+'\nEncToken: '+d.enc_token+'</pre>';
+    loadAgents();
+  });
+});
+document.getElementById('configUpdateForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  let patch;
+  try{patch=JSON.parse(fd.get('patch'));}catch(err){alert('Patch 必须是合法 JSON');return;}
+  const body={config_version:parseInt(fd.get('config_version')),patch:patch,reason:fd.get('reason')||''};
+  fetch('/api/v1/admin/agents/'+currentAgentID+'/config-update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json()).then(()=>{
+    document.getElementById('configForm').style.display='none';
+    alert('配置已下发');
+  });
+});
+loadAgents();
+</script>
+{{end}}

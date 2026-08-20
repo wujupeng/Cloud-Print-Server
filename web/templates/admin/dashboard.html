@@ -1,0 +1,49 @@
+{{template "admin_layout" .}}
+{{define "admin_content"}}
+<section class="page-header">
+  <h1>仪表盘</h1>
+  <p class="muted">实时运维总览</p>
+</section>
+<section class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">在线 Agent</div>
+    <div class="stat-value" id="statAgents">-</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">设备总数</div>
+    <div class="stat-value" id="statDevices">-</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">今日任务</div>
+    <div class="stat-value" id="statTasksToday">-</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">错误数</div>
+    <div class="stat-value" id="statErrors">-</div>
+  </div>
+</section>
+<section class="panel">
+  <h2>Agent 在线状态</h2>
+  <table class="data-table" id="agentsTable">
+    <thead>
+      <tr><th>Agent ID</th><th>名称</th><th>版本</th><th>在线设备</th><th>待处理任务</th><th>网络</th><th>最近心跳</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+<script>
+fetch('/api/v1/admin/agents').then(r=>r.json()).then(res=>{
+  const data=res.data||[];
+  document.getElementById('statAgents').textContent=data.filter(a=>a.online).length;
+  const tbody=document.querySelector('#agentsTable tbody');
+  tbody.innerHTML=data.map(a=>`<tr>
+    <td>${a.agent_id}</td><td>${a.name||''}</td><td>${a.version||''}</td>
+    <td>${a.online_devices||0}</td><td>${a.pending_tasks||0}</td>
+    <td>${a.net_class||''}</td><td>${a.last_heartbeat_at||''}</td>
+  </tr>`).join('');
+}).catch(()=>{});
+fetch('/api/v1/admin/devices').then(r=>r.json()).then(res=>{
+  document.getElementById('statDevices').textContent=(res.data||[]).length;
+}).catch(()=>{});
+</script>
+{{end}}

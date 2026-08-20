@@ -1,0 +1,34 @@
+{{define "admin_layout"}}<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{.Title}} - 管理后台</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Cloud Print · 管理后台</div>
+  <nav class="topnav">
+    <span class="user">{{.UserID}} · {{.Role}}</span>
+    <a href="/login" class="btn-link">退出</a>
+  </nav>
+</header>
+<div class="layout">
+  <aside class="sidebar">
+    <a href="/admin/" class="{{if eq .Active "dashboard"}}active{{end}}">仪表盘</a>
+    <a href="/admin/users" class="{{if eq .Active "users"}}active{{end}}">用户管理</a>
+    <a href="/admin/factories" class="{{if eq .Active "factories"}}active{{end}}">工厂管理</a>
+    <a href="/admin/agents" class="{{if eq .Active "agents"}}active{{end}}">Agent 管理</a>
+    <a href="/admin/devices" class="{{if eq .Active "devices"}}active{{end}}">设备管理</a>
+    <a href="/admin/audit" class="{{if eq .Active "audit"}}active{{end}}">审计日志</a>
+    <hr>
+    <a href="/dashboard">返回用户端</a>
+  </aside>
+  <main class="content">
+    {{template "admin_content" .}}
+  </main>
+</div>
+<script src="/static/js/app.js"></script>
+</body>
+</html>{{end}}

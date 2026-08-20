@@ -1,0 +1,115 @@
+{{template "admin_layout" .}}
+{{define "admin_content"}}
+<section class="page-header">
+  <h1>设备管理</h1>
+  <button class="btn-primary" onclick="document.getElementById('deviceForm').style.display='block'">添加设备</button>
+</section>
+<section class="panel">
+  <table class="data-table" id="devicesTable">
+    <thead>
+      <tr><th>设备 ID</th><th>名称</th><th>IP</th><th>型号</th><th>协议</th><th>端口</th><th>工厂</th><th>Agent</th><th>状态</th><th>操作</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+<section class="panel" id="deviceForm" style="display:none">
+  <h2>添加设备</h2>
+  <form id="newDeviceForm" class="form-grid">
+    <input name="name" placeholder="设备名称" required>
+    <input name="ip" placeholder="IP 地址" required>
+    <input name="hostname" placeholder="主机名 (可选)">
+    <input name="model" placeholder="型号 (可选)">
+    <select name="protocol">
+      <option value="RAW">RAW</option><option value="LPR">LPR</option><option value="IPP">IPP</option>
+    </select>
+    <input name="port" type="number" placeholder="端口 (可选)">
+    <input name="factory_id" placeholder="工厂 ID" required>
+    <input name="agent_id" placeholder="Agent ID" required>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">添加</button>
+      <button type="button" class="btn-link" onclick="document.getElementById('deviceForm').style.display='none'">取消</button>
+    </div>
+  </form>
+</section>
+<section class="panel" id="editDeviceForm" style="display:none">
+  <h2>编辑设备 <span id="editDeviceID" class="muted"></span></h2>
+  <form id="updateDeviceForm" class="form-grid">
+    <input name="name" placeholder="设备名称">
+    <input name="ip" placeholder="IP 地址">
+    <input name="hostname" placeholder="主机名">
+    <input name="model" placeholder="型号">
+    <select name="protocol">
+      <option value="RAW">RAW</option><option value="LPR">LPR</option><option value="IPP">IPP</option>
+    </select>
+    <input name="port" type="number" placeholder="端口">
+    <input name="factory_id" placeholder="工厂 ID">
+    <input name="agent_id" placeholder="Agent ID">
+    <select name="status">
+      <option value="ONLINE">ONLINE</option><option value="OFFLINE">OFFLINE</option><option value="PROBE_FAILED">PROBE_FAILED</option>
+    </select>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">保存</button>
+      <button type="button" class="btn-link" onclick="document.getElementById('editDeviceForm').style.display='none'">取消</button>
+    </div>
+  </form>
+</section>
+<script>
+let editID='';
+function loadDevices(){
+  fetch('/api/v1/admin/devices').then(r=>r.json()).then(res=>{
+    const data=res.data||[];
+    document.querySelector('#devicesTable tbody').innerHTML=data.map(d=>`<tr>
+      <td>${d.device_id}</td><td>${d.name||''}</td><td>${d.ip||''}</td>
+      <td>${d.model||''}</td><td>${d.protocol||''}</td><td>${d.port||''}</td>
+      <td>${d.factory_id||''}</td><td>${d.agent_id||''}</td><td>${d.status||''}</td>
+      <td>
+        <button class="btn-link" onclick="editDevice('${d.device_id}')">编辑</button>
+        <button class="btn-link" onclick="deleteDevice('${d.device_id}')">删除</button>
+      </td>
+    </tr>`).join('');
+  });
+}
+function editDevice(id){
+  editID=id;
+  document.getElementById('editDeviceID').textContent='('+id+')';
+  fetch('/api/v1/admin/devices').then(r=>r.json()).then(res=>{
+    const d=(res.data||[]).find(x=>x.device_id===id);
+    if(!d)return;
+    const f=document.getElementById('updateDeviceForm');
+    f.name.value=d.name||'';f.ip.value=d.ip||'';f.hostname.value=d.hostname||'';
+    f.model.value=d.model||'';f.protocol.value=d.protocol||'RAW';
+    f.port.value=d.port||'';f.factory_id.value=d.factory_id||'';
+    f.agent_id.value=d.agent_id||'';f.status.value=d.status||'OFFLINE';
+    document.getElementById('editDeviceForm').style.display='block';
+  });
+}
+function deleteDevice(id){
+  if(!confirm('确认删除设备?'))return;
+  fetch('/api/v1/admin/devices/'+id,{method:'DELETE'}).then(()=>loadDevices());
+}
+document.getElementById('newDeviceForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  const body={};
+  fd.forEach((v,k)=>{if(v!=='')body[k]=v;});
+  if(body.port)body.port=parseInt(body.port);
+  fetch('/api/v1/admin/devices',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json()).then(()=>{
+    e.target.reset();
+    document.getElementById('deviceForm').style.display='none';
+    loadDevices();
+  });
+});
+document.getElementById('updateDeviceForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  const body={};
+  fd.forEach((v,k)=>{if(v!=='')body[k]=v;});
+  if(body.port)body.port=parseInt(body.port);
+  fetch('/api/v1/admin/devices/'+editID,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json()).then(()=>{
+    document.getElementById('editDeviceForm').style.display='none';
+    loadDevices();
+  });
+});
+loadDevices();
+</script>
+{{end}}

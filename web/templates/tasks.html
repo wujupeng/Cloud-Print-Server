@@ -1,0 +1,74 @@
+{{template "base_layout" .}}
+{{define "page_content"}}
+<section class="page-header">
+  <h1>任务列表</h1>
+  <div class="filter-bar">
+    <select id="statusFilter">
+      <option value="">全部状态</option>
+      <option value="PENDING" {{if eq .StatusFilter "PENDING"}}selected{{end}}>PENDING</option>
+      <option value="RUNNING" {{if eq .StatusFilter "RUNNING"}}selected{{end}}>RUNNING</option>
+      <option value="SUCCESS" {{if eq .StatusFilter "SUCCESS"}}selected{{end}}>SUCCESS</option>
+      <option value="FAILED" {{if eq .StatusFilter "FAILED"}}selected{{end}}>FAILED</option>
+      <option value="RETRYING" {{if eq .StatusFilter "RETRYING"}}selected{{end}}>RETRYING</option>
+      <option value="CANCELLED" {{if eq .StatusFilter "CANCELLED"}}selected{{end}}>CANCELLED</option>
+    </select>
+    <a href="/tasks/new" class="btn-primary">新建任务</a>
+    <span id="sseStatus" class="muted">实时监听: 等待中...</span>
+  </div>
+</section>
+<section class="panel">
+  <table class="data-table" id="tasksTable">
+    <thead>
+      <tr><th>任务 ID</th><th>设备 ID</th><th>状态</th><th>重试</th><th>提交时间</th><th>开始时间</th><th>完成时间</th><th>错误</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+    {{range .Tasks}}
+      <tr data-task-id="{{.TaskID}}">
+        <td>{{.TaskID}}</td>
+        <td>{{.DeviceID}}</td>
+        <td><span class="badge badge-{{lower .Status}}">{{.Status}}</span></td>
+        <td>{{.RetryCount}}</td>
+        <td>{{formatTime .SubmittedAt}}</td>
+        <td>{{formatTime .StartedAt}}</td>
+        <td>{{formatTime .FinishedAt}}</td>
+        <td>{{.ErrorMsg}}</td>
+        <td>
+          {{if or (eq .Status "PENDING") (eq .Status "RUNNING")}}
+          <button class="btn-link" onclick="cancelTask('{{.TaskID}}')">取消</button>
+          {{end}}
+        </td>
+      </tr>
+    {{else}}
+      <tr><td colspan="9" class="empty">暂无任务</td></tr>
+    {{end}}
+    </tbody>
+  </table>
+</section>
+<script>
+function cancelTask(id){
+  if(!confirm('确认取消任务?'))return;
+  fetch('/api/v1/tasks/'+id,{method:'DELETE'}).then(()=>location.reload());
+}
+document.getElementById('statusFilter').addEventListener('change',e=>{
+  const v=e.target.value;
+  location.href='/tasks'+(v?('?status='+v):'');
+});
+function startSSE(){
+  const es=new EventSource('/api/v1/events');
+  const statusEl=document.getElementById('sseStatus');
+  es.onopen=()=>{statusEl.textContent='实时监听: 已连接';};
+  es.onerror=()=>{statusEl.textContent='实时监听: 断开, 重试中...';};
+  es.addEventListener('task_status',e=>{
+    try{
+      const data=JSON.parse(e.data);
+      const row=document.querySelector('tr[data-task-id="'+data.task_id+'"]');
+      if(row){
+        const badge=row.querySelector('.badge');
+        if(badge){badge.textContent=data.status;badge.className='badge badge-'+data.status.toLowerCase();}
+      }
+    }catch(err){}
+  });
+}
+startSSE();
+</script>
+{{end}}

@@ -1,0 +1,40 @@
+{{template "admin_layout" .}}
+{{define "admin_content"}}
+<section class="page-header">
+  <h1>审计日志</h1>
+  <form id="filterForm" class="form-row">
+    <input name="action" placeholder="动作 (可选)">
+    <input name="start" type="datetime-local">
+    <input name="end" type="datetime-local">
+    <button type="submit" class="btn-primary">查询</button>
+  </form>
+</section>
+<section class="panel">
+  <table class="data-table" id="auditTable">
+    <thead>
+      <tr><th>审计 ID</th><th>用户 ID</th><th>动作</th><th>目标</th><th>详情</th><th>IP</th><th>时间</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+<script>
+function loadAudit(params){
+  const qs=new URLSearchParams(params).toString();
+  fetch('/api/v1/admin/audit-logs'+(qs?('?'+qs):'')).then(r=>r.json()).then(res=>{
+    const data=res.data||[];
+    document.querySelector('#auditTable tbody').innerHTML=data.map(a=>`<tr>
+      <td>${a.audit_id}</td><td>${a.user_id||''}</td><td>${a.action||''}</td>
+      <td>${a.target||''}</td><td>${a.detail||''}</td><td>${a.ip||''}</td><td>${a.ts||''}</td>
+    </tr>`).join('');
+  });
+}
+document.getElementById('filterForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  const params={};
+  fd.forEach((v,k)=>{if(v)params[k]=v;});
+  loadAudit(params);
+});
+loadAudit({});
+</script>
+{{end}}

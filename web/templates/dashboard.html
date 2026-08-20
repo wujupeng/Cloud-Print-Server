@@ -1,0 +1,59 @@
+{{template "base_layout" .}}
+{{define "page_content"}}
+<section class="page-header">
+  <h1>仪表盘</h1>
+  <p class="muted">最近任务与设备状态</p>
+</section>
+<section class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">可用设备</div>
+    <div class="stat-value">{{len .Devices}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">最近任务</div>
+    <div class="stat-value">{{len .Tasks}}</div>
+  </div>
+</section>
+<section class="panel">
+  <h2>最近任务</h2>
+  <table class="data-table">
+    <thead>
+      <tr><th>任务 ID</th><th>设备</th><th>状态</th><th>提交时间</th><th>完成时间</th></tr>
+    </thead>
+    <tbody>
+    {{range .Tasks}}
+      <tr>
+        <td>{{.TaskID}}</td>
+        <td>{{.DeviceID}}</td>
+        <td><span class="badge badge-{{lower .Status}}">{{.Status}}</span></td>
+        <td>{{formatTime .SubmittedAt}}</td>
+        <td>{{formatTime .FinishedAt}}</td>
+      </tr>
+    {{else}}
+      <tr><td colspan="5" class="empty">暂无任务</td></tr>
+    {{end}}
+    </tbody>
+  </table>
+</section>
+<section class="panel">
+  <h2>设备状态</h2>
+  <table class="data-table">
+    <thead>
+      <tr><th>设备 ID</th><th>名称</th><th>IP</th><th>协议</th><th>状态</th></tr>
+    </thead>
+    <tbody>
+    {{range .Devices}}
+      <tr>
+        <td>{{.DeviceID}}</td>
+        <td>{{.Name}}</td>
+        <td>{{.IP}}</td>
+        <td>{{.Protocol}}</td>
+        <td><span class="badge badge-{{lower .Status}}">{{.Status}}</span></td>
+      </tr>
+    {{else}}
+      <tr><td colspan="5" class="empty">暂无可用设备</td></tr>
+    {{end}}
+    </tbody>
+  </table>
+</section>
+{{end}}

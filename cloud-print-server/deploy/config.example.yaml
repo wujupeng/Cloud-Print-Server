@@ -1,0 +1,44 @@
+server:
+  listen: ":8080"
+  domain: "print.oascii.com"
+  tls:
+    enabled: false
+    cert_file: ""
+    key_file: ""
+
+db:
+  path: "/var/lib/cloud-print-server/cloud-print.db"
+
+storage:
+  data_dir: "/var/lib/cloud-print-server/data"
+  doc_retention_hours: 24
+
+auth:
+  jwt_ttl_hours: 12
+  bcrypt_cost: 10
+
+audit:
+  retention_days: 180
+
+log:
+  level: "info"
+  retention_days: 30
+  max_size_mb: 100
+  dir: "/var/log/cloud-print-server"
+
+cors:
+  allowed_origins:
+    - "https://print.oascii.com"
+
+wss:
+  path: "/agent"
+  heartbeat_interval: 30s
+  heartbeat_timeout: 90s
+  min_version: 1
+
+upload:
+  max_size_mb: 50
+
+cloud:
+  endpoint: "print.oascii.com"
+  agent_token_default: ""

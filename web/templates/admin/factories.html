@@ -1,0 +1,48 @@
+{{template "admin_layout" .}}
+{{define "admin_content"}}
+<section class="page-header">
+  <h1>工厂管理</h1>
+  <button class="btn-primary" onclick="document.getElementById('factoryForm').style.display='block'">新建工厂</button>
+</section>
+<section class="panel">
+  <table class="data-table" id="factoriesTable">
+    <thead>
+      <tr><th>工厂 ID</th><th>名称</th><th>编码</th><th>位置</th><th>创建时间</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+<section class="panel" id="factoryForm" style="display:none">
+  <h2>新建工厂</h2>
+  <form id="newFactoryForm" class="form-row">
+    <input name="name" placeholder="工厂名称" required>
+    <input name="code" placeholder="工厂编码">
+    <input name="location" placeholder="位置">
+    <button type="submit" class="btn-primary">创建</button>
+    <button type="button" class="btn-link" onclick="document.getElementById('factoryForm').style.display='none'">取消</button>
+  </form>
+</section>
+<script>
+function loadFactories(){
+  fetch('/api/v1/admin/factories').then(r=>r.json()).then(res=>{
+    const data=res.data||[];
+    document.querySelector('#factoriesTable tbody').innerHTML=data.map(f=>`<tr>
+      <td>${f.factory_id}</td><td>${f.name}</td><td>${f.code||''}</td>
+      <td>${f.location||''}</td><td>${f.created_at||''}</td>
+    </tr>`).join('');
+  });
+}
+document.getElementById('newFactoryForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  const body={};
+  fd.forEach((v,k)=>body[k]=v);
+  fetch('/api/v1/admin/factories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json()).then(()=>{
+    e.target.reset();
+    document.getElementById('factoryForm').style.display='none';
+    loadFactories();
+  });
+});
+loadFactories();
+</script>
+{{end}}

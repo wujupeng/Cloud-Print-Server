@@ -1,0 +1,37 @@
+{{define "base_layout"}}<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{.Title}} - Cloud Print</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+{{if ne .Active "login"}}
+<header class="topbar">
+  <div class="brand">Cloud Print</div>
+  <nav class="topnav">
+    <span class="user">{{if .Username}}{{.Username}}{{else}}{{.UserID}}{{end}} · {{.Role}}</span>
+    {{if eq .Role "ADMIN"}}<a href="/admin/" class="btn-link">管理后台</a>{{end}}
+    <a href="/login" class="btn-link" id="logoutLink">退出</a>
+  </nav>
+</header>
+<div class="layout">
+  <aside class="sidebar">
+    <a href="/dashboard" class="{{if eq .Active "dashboard"}}active{{end}}">仪表盘</a>
+    <a href="/tasks" class="{{if eq .Active "tasks"}}active{{end}}">任务列表</a>
+    <a href="/tasks/new" class="{{if eq .Active "task_new"}}active{{end}}">新建任务</a>
+    <a href="/devices" class="{{if eq .Active "devices"}}active{{end}}">设备列表</a>
+  </aside>
+  <main class="content">
+    {{template "page_content" .}}
+  </main>
+</div>
+{{else}}
+<main class="login-wrap">
+  {{template "page_content" .}}
+</main>
+{{end}}
+<script src="/static/js/app.js"></script>
+</body>
+</html>{{end}}

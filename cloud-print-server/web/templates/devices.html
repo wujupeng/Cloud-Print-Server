@@ -1,0 +1,36 @@
+{{template "base_layout" .}}
+{{define "page_content"}}
+<section class="page-header">
+  <h1>设备列表</h1>
+  <p class="muted">按工厂分组展示</p>
+</section>
+{{range .Groups}}
+<section class="panel">
+  <h2>工厂: {{.FactoryID}}</h2>
+  <table class="data-table">
+    <thead>
+      <tr><th>设备 ID</th><th>名称</th><th>IP</th><th>主机名</th><th>型号</th><th>协议</th><th>端口</th><th>状态</th><th>最近状态时间</th></tr>
+    </thead>
+    <tbody>
+    {{range .Devices}}
+      <tr>
+        <td>{{.DeviceID}}</td>
+        <td>{{.Name}}</td>
+        <td>{{.IP}}</td>
+        <td>{{.Hostname}}</td>
+        <td>{{.Model}}</td>
+        <td>{{.Protocol}}</td>
+        <td>{{.Port}}</td>
+        <td><span class="badge badge-{{lower .Status}}">{{.Status}}</span></td>
+        <td>{{formatTime .LastStatusAt}}</td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table>
+</section>
+{{else}}
+<section class="panel">
+  <div class="empty">暂无可用设备</div>
+</section>
+{{end}}
+{{end}}
